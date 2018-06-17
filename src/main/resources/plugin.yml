@@ -1,0 +1,5 @@
+name: BungeeDiscordChat
+version: ${project.version}
+main: jp.mkserver.bungeediscordchat.BungeeDiscordChat
+description: BungeeCord <-> Discord ChatPlugin
+author: Mr_IK

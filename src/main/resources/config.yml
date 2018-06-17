@@ -1,0 +1,4 @@
+#bottoken にbotのトークンを入れてください
+bottoken: 'testtoken'
+#channelidにチャンネルのIDを入れてください
+channelid: 000
