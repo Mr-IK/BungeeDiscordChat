@@ -73,7 +73,10 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
         String sname = ((ProxiedPlayer) e.getSender()).getServer().getInfo().getName();
         String msg = e.getMessage();
         if(lunachat.equalsIgnoreCase("true")) {
-            msg = msg +" ("+ Japanizer.japanize(msg,JapanizeType.GOOGLE_IME)+")";
+            String msgs = Japanizer.japanize(repColor(msg),JapanizeType.GOOGLE_IME);
+            if(!msgs.equalsIgnoreCase("")){
+                msg = msg +" ("+msgs+")";
+            }
         }
         discord.sendMessage("["+sname+" | "+name+"] "+msg);
     }
@@ -163,6 +166,23 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
         FileManager.removeConfig(uuid.toString());
         links.remove(uuid);
     }
+
+    //カラーコード除去
+    public String repColor(String msg){
+        String msgs = msg.replace("§1","")
+                .replace("§2","").replace("§3","")
+                .replace("§4","").replace("§5","")
+                .replace("§6","").replace("§7","")
+                .replace("§8","").replace("§9","")
+                .replace("§0","").replace("§l","")
+                .replace("§m","").replace("§n","")
+                .replace("§o","").replace("§a","")
+                .replace("§b","").replace("§c","")
+                .replace("§d","").replace("§e","")
+                .replace("§f","");
+        return msgs;
+    }
+
 
 
 }
