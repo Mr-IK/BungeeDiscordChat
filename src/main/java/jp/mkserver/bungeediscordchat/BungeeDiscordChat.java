@@ -20,6 +20,7 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
     Discord discord;
     String prefix = "§7§l[§e§lB§b§lDiscord§7§l]§r";
     boolean connect = false;
+    boolean power = true;
 
     String bottoken = null;
     long channelid = -1;
@@ -94,7 +95,10 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
         discord.sendMessage(":door: **"+name+" さんが "+servername+" サーバーからログアウトしました**");
     }
 
-    public void sendBroadcast(String message){
+    public void sendBroadcast(String message) {
+        if(!power){
+            return;
+        }
         ProxyServer.getInstance().broadcast(new TextComponent(message));
     }
 

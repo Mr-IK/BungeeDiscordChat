@@ -3,6 +3,7 @@ package jp.mkserver.bungeediscordchat;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.ChannelType;
 import net.dv8tion.jda.core.entities.PrivateChannel;
 import net.dv8tion.jda.core.entities.TextChannel;
@@ -35,6 +36,9 @@ public class Discord extends ListenerAdapter {
     }
     @Override
     public void onMessageReceived(MessageReceivedEvent event){
+        if(!main.power){
+            return;
+        }
         if(event.getAuthor().getId().equalsIgnoreCase(jda.getSelfUser().getId())){
             return;
         }
@@ -61,8 +65,11 @@ public class Discord extends ListenerAdapter {
                         ch.sendMessage(playername+"("+uuid.toString()+") さんはすでに "+getName_link(event.getAuthor())+" さんとリンクしてます").queue();
                         return;
                     }
-                    ch.sendMessage(playername+"("+uuid.toString()+") さんにメッセージを送信しました。").queue();
-                    ch.sendMessage("ゲーム内にて/bd link を実行してください。").queue();
+                    if(main.link.containsKey(uuid)){
+                        ch.sendMessage(playername+"("+uuid.toString()+") さんは他のプレイヤーからのリンク申請を確認しています").queue();
+                        return;
+                    }
+                    ch.sendMessage(playername+"("+uuid.toString()+") さんにメッセージを送信しました。\nゲーム内にて/bd link を実行してください。").queue();
                     main.getProxy().getPlayer(playername).sendMessage(new TextComponent(main.prefix+getName_link(event.getAuthor())+"さんからリンク申請が届きました。"));
                     main.getProxy().getPlayer(playername).sendMessage(new TextComponent(main.prefix+"/bd link もしくは /bd ignore を実行してください。"));
                     main.link.put(uuid,event.getAuthor().getIdLong());
@@ -72,14 +79,23 @@ public class Discord extends ListenerAdapter {
                     return;
                 }
             }else{
-                ch.sendMessage("リンクするには !bd [player名] です").queue();
-                ch.sendMessage("リンク情報を確認するには !bd infoです").queue();
+                ch.sendMessage("リンクするには !bd [player名] です\nリンク情報を確認するには !bd infoです").queue();
                 return;
             }
         }else if(event.getChannelType()!=ChannelType.TEXT){
             return;
         }
         if(event.getTextChannel().getIdLong()!=channel.getIdLong()) {
+            return;
+        }
+        if(!main.link_contain_d(event.getAuthor().getIdLong())){
+            event.getAuthor().openPrivateChannel().complete().sendMessage("そのチャンネルでチャットするにはマイクラとのリンクが必要です" +
+                    "\n指示に従ってリンクを行ってください。" +
+                    "\nリンクするには !bd [player名] です" +
+                    "\nリンク情報を確認するには !bd infoです").queue();
+            if(channel.getGuild().getMember(jda.getUserById(jda.getSelfUser().getIdLong())).getPermissions(channel).contains(Permission.MESSAGE_MANAGE)) {
+                event.getMessage().delete().queue();
+            }
             return;
         }
         main.sendBroadcast(main.prefix+"§f("+getName(event.getAuthor())+"§f) "+event.getMessage().getContentRaw());
@@ -100,6 +116,9 @@ public class Discord extends ListenerAdapter {
     }
 
     public void sendMessage(String message){
+        if(!main.power){
+            return;
+        }
         if(channel == null||message == null){
             return;
         }

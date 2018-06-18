@@ -20,6 +20,10 @@ public class CreateCommand extends Command {
             return;
         }
         ProxiedPlayer p = (ProxiedPlayer) sender;
+        if(!plugin.power&&!p.hasPermission("bd.op")){
+            p.sendMessage(new TextComponent(plugin.prefix+"§4機能停止中"));
+            return;
+        }
         if(args.length == 0){
             p.sendMessage(new TextComponent(plugin.prefix+"§2====ヘルプメニュー===="));
             p.sendMessage(new TextComponent(plugin.prefix + "§6/bd link §f: Discordアカウントとマイクラをリンクします"));
@@ -29,9 +33,14 @@ public class CreateCommand extends Command {
             if(p.hasPermission("bd.op")) {
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd check : 正常に接続しているかチェックします"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd info [Player名] : 他のプレイヤーのリンク状況を確認します"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd on : 機能を起動します"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd off : 機能を停止します(緊急時のみ使うこと)"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd title <main>//<sub>//<time> : (おまけ機能)全プレイヤーにタイトルを表示"));
+                if(!plugin.power){
+                    p.sendMessage(new TextComponent(plugin.prefix+"§4§l機能停止中"));
+                }
             }
-            p.sendMessage(new TextComponent(plugin.prefix+"§2==================="));
+            p.sendMessage(new TextComponent(plugin.prefix+"§2====================="));
             p.sendMessage(new TextComponent(plugin.prefix + "§c§lCreated by Mr_IK"));
             return;
         }else if(args.length == 1){
@@ -82,6 +91,22 @@ public class CreateCommand extends Command {
                     return;
                 }
                 p.sendMessage(new TextComponent(plugin.prefix+"§aあなたは "+plugin.discord.getName_link(plugin.discord.jda.getUserById(plugin.links.get(p.getUniqueId())))+" さんとリンクしています"));
+                return;
+            }else if(args[0].equalsIgnoreCase("on")){
+                if(!p.hasPermission("bd.op")){
+                    p.sendMessage(new TextComponent(plugin.prefix+"§4あなたはこのコマンドを実行できません"));
+                    return;
+                }
+                plugin.power = true;
+                p.sendMessage(new TextComponent(plugin.prefix+"§aBdiscordの機能を開放しました。"));
+                return;
+            }else if(args[0].equalsIgnoreCase("off")){
+                if(!p.hasPermission("bd.op")){
+                    p.sendMessage(new TextComponent(plugin.prefix+"§4あなたはこのコマンドを実行できません"));
+                    return;
+                }
+                plugin.power = false;
+                p.sendMessage(new TextComponent(plugin.prefix+"§aBdiscordの機能を停止しました。"));
                 return;
             }
         }else if(args.length == 2){
@@ -142,7 +167,12 @@ public class CreateCommand extends Command {
         if(p.hasPermission("bd.op")) {
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd check : 正常に接続しているかチェックします"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd info [Player名] : 他のプレイヤーのリンク状況を確認します"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd on : 機能を起動します"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd off : 機能を停止します(緊急時のみ使うこと)"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd title <main>//<sub>//<time> : (おまけ機能)全プレイヤーにタイトルを表示"));
+            if(!plugin.power){
+                p.sendMessage(new TextComponent(plugin.prefix+"§4§l機能停止中"));
+            }
         }
         p.sendMessage(new TextComponent(plugin.prefix+"§2====================="));
         p.sendMessage(new TextComponent(plugin.prefix + "§c§lCreated by Mr_IK"));
