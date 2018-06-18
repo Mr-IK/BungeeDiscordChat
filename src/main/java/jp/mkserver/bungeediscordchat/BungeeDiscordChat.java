@@ -24,6 +24,7 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
 
     String bottoken = null;
     long channelid = -1;
+    String lunachat = null;
     HashMap<UUID,Long> link;
     HashMap<UUID,Long> links;
     @Override
@@ -33,6 +34,7 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
         config = cf.getConfig();
         bottoken = config.getString("bottoken");
         channelid = config.getLong("channelid");
+        lunachat = config.getString("lunachat");
         link = new HashMap<>();
         links = FileManager.loadEnable(this);
         try {
@@ -69,7 +71,11 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
         ProxiedPlayer player = (ProxiedPlayer) e.getSender();
         String name = player.getName();
         String sname = ((ProxiedPlayer) e.getSender()).getServer().getInfo().getName();
-        discord.sendMessage("["+sname+" | "+name+"] "+e.getMessage());
+        String msg = e.getMessage();
+        if(lunachat.equalsIgnoreCase("true")) {
+            msg = msg +" ("+ Japanizer.japanize(msg,JapanizeType.GOOGLE_IME)+")";
+        }
+        discord.sendMessage("["+sname+" | "+name+"] "+msg);
     }
     @EventHandler
     public void onLogout(PlayerDisconnectEvent e){

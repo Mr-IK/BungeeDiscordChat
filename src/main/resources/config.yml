@@ -2,3 +2,5 @@
 bottoken: 'testtoken'
 #channelidにチャンネルのIDを入れてください
 channelid: 000
+#lunachatモードを機能させるか否か true/false
+lunachat: true
