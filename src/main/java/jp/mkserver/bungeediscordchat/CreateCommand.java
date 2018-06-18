@@ -17,6 +17,79 @@ public class CreateCommand extends Command {
     @Override
     public void execute(CommandSender sender, String[] args) {
         if (!(sender instanceof ProxiedPlayer)) {
+            if(args.length == 0){
+                plugin.getLogger().info("bd check : 正常に接続しているかチェックします");
+                plugin.getLogger().info("bd info [Player名] : 他のプレイヤーのリンク状況を確認します");
+                plugin.getLogger().info("bd on : 機能を起動します");
+                plugin.getLogger().info("bd off : 機能を停止します(緊急時のみ使うこと)");
+                plugin.getLogger().info("bd title <main>//<sub>//<time> : (おまけ機能)全プレイヤーにタイトルを表示");
+                plugin.getLogger().info("bd msg [内容] : Discordにメッセージを送信します");
+                plugin.getLogger().info("Created by Mr_IK");
+            }else if(args.length == 1){
+                if(args[0].equalsIgnoreCase("check")){
+                    if(plugin.connect){
+                        plugin.getLogger().info("正常に接続されています");
+                        plugin.getLogger().info("BOTトークン: §f"+plugin.bottoken);
+                        plugin.getLogger().info("サーバー名: §f"+plugin.discord.channel.getGuild().getName());
+                        plugin.getLogger().info("チャンネル名: §f"+plugin.discord.channel.getName());
+                    }else{
+                        plugin.getLogger().info("接続できていません。ボットトークン・チャンネルIDを見直してください。");
+                    }
+                    return;
+                }else if(args[0].equalsIgnoreCase("on")){
+                    plugin.power = true;
+                    plugin.getLogger().info("§aBdiscordの機能を開放しました。");
+                    return;
+                }else if(args[0].equalsIgnoreCase("off")){
+                    plugin.power = false;
+                    plugin.getLogger().info("§aBdiscordの機能を停止しました。");
+                    return;
+                }
+            }else if(args.length == 2){
+                if(args[0].equalsIgnoreCase("info")){
+                    ProxiedPlayer player = ProxyServer.getInstance().getPlayer(args[1]);
+                    if (player != null) {
+                        if(!plugin.link_contain_p(player.getUniqueId())){
+                            plugin.getLogger().info(args[1]+" さんは誰ともリンクしていません");
+                            return;
+                        }
+                        plugin.getLogger().info(args[1]+"さんは "+plugin.discord.getName_link(plugin.discord.jda.getUserById(plugin.links.get(player.getUniqueId())))+" さんとリンクしています");
+                        return;
+                    }else {
+                        plugin.getLogger().info("そのプレイヤーは現在オフラインです");
+                        return;
+                    }
+                }else if(args[0].equalsIgnoreCase("title")) {
+                    String[] tt = args[1].split("//");
+                    if (tt.length > 3 || tt.length == 0) {
+                        plugin.getLogger().info("コマンドが間違っています");
+                        plugin.getLogger().info("bd title <main>//<sub>//<time>");
+                        return;
+                    }
+                    Title title = ProxyServer.getInstance().createTitle().title(new TextComponent(ChatColor.translateAlternateColorCodes('&', tt[0])));
+                    if (tt.length >= 2) {
+                        title.subTitle(new TextComponent(ChatColor.translateAlternateColorCodes('&', tt[1])));
+                    }
+                    int time = 100;
+                    if (tt.length == 3) {
+                        try {
+                            time = Integer.parseInt(tt[2]) * 20;
+                        } catch (NumberFormatException e) {
+                            plugin.getLogger().info("timeは数字(秒数)で入力してください");
+                            plugin.getLogger().info("bd title <main>//(sub)//(time)");
+                            return;
+                        }
+                    }
+                    title.stay(time);
+                    for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
+                        player.sendTitle(title);
+                    }
+                    return;
+                }else if(args[0].equalsIgnoreCase("msg")){
+                    plugin.discord.sendMessage(":mega: "+args[1]);
+                    return;
+                }
+            }
             return;
         }
         ProxiedPlayer p = (ProxiedPlayer) sender;
@@ -33,6 +106,7 @@ public class CreateCommand extends Command {
             if(p.hasPermission("bd.op")) {
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd check : 正常に接続しているかチェックします"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd info [Player名] : 他のプレイヤーのリンク状況を確認します"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd msg [内容] : Discordにメッセージを送信します"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd on : 機能を起動します"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd off : 機能を停止します(緊急時のみ使うこと)"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd title <main>//<sub>//<time> : (おまけ機能)全プレイヤーにタイトルを表示"));
@@ -127,35 +201,42 @@ public class CreateCommand extends Command {
                     p.sendMessage(new TextComponent(plugin.prefix+"§4そのプレイヤーは現在オフラインです"));
                     return;
                 }
-            }else if(args[0].equalsIgnoreCase("title")){
-                if(!p.hasPermission("bd.op")){
-                    p.sendMessage(new TextComponent(plugin.prefix+"§4あなたはこのコマンドを実行できません"));
+            }else if(args[0].equalsIgnoreCase("title")) {
+                if (!p.hasPermission("bd.op")) {
+                    p.sendMessage(new TextComponent(plugin.prefix + "§4あなたはこのコマンドを実行できません"));
                     return;
                 }
                 String[] tt = args[1].split("//");
-                if(tt.length > 3||tt.length == 0){
-                    p.sendMessage(new TextComponent(plugin.prefix+"§4コマンドが間違っています"));
+                if (tt.length > 3 || tt.length == 0) {
+                    p.sendMessage(new TextComponent(plugin.prefix + "§4コマンドが間違っています"));
                     p.sendMessage(new TextComponent(plugin.prefix + "§c/bd title <main>//<sub>//<time>"));
                     return;
                 }
-                Title title = ProxyServer.getInstance().createTitle().title(new TextComponent(ChatColor.translateAlternateColorCodes('&',tt[0])));
-                if(tt.length >= 2){
-                    title.subTitle(new TextComponent(ChatColor.translateAlternateColorCodes('&',tt[1])));
+                Title title = ProxyServer.getInstance().createTitle().title(new TextComponent(ChatColor.translateAlternateColorCodes('&', tt[0])));
+                if (tt.length >= 2) {
+                    title.subTitle(new TextComponent(ChatColor.translateAlternateColorCodes('&', tt[1])));
                 }
                 int time = 100;
-                if(tt.length == 3){
-                    try{
+                if (tt.length == 3) {
+                    try {
                         time = Integer.parseInt(tt[2]) * 20;
-                    }catch (NumberFormatException e){
-                        p.sendMessage(new TextComponent(plugin.prefix+"§4timeは数字(秒数)で入力してください"));
+                    } catch (NumberFormatException e) {
+                        p.sendMessage(new TextComponent(plugin.prefix + "§4timeは数字(秒数)で入力してください"));
                         p.sendMessage(new TextComponent(plugin.prefix + "§c/bd title <main>//(sub)//(time)"));
                         return;
                     }
                 }
                 title.stay(time);
-                for(ProxiedPlayer player:ProxyServer.getInstance().getPlayers()){
+                for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
                     player.sendTitle(title);
                 }
+                return;
+            }else if(args[0].equalsIgnoreCase("msg")){
+                if (!p.hasPermission("bd.op")) {
+                    p.sendMessage(new TextComponent(plugin.prefix + "§4あなたはこのコマンドを実行できません"));
+                    return;
+                }
+                plugin.discord.sendMessage(":mega: "+args[1]);
                 return;
             }
         }
@@ -167,6 +248,7 @@ public class CreateCommand extends Command {
         if(p.hasPermission("bd.op")) {
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd check : 正常に接続しているかチェックします"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd info [Player名] : 他のプレイヤーのリンク状況を確認します"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd msg [内容] : Discordにメッセージを送信します"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd on : 機能を起動します"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd off : 機能を停止します(緊急時のみ使うこと)"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd title <main>//<sub>//<time> : (おまけ機能)全プレイヤーにタイトルを表示"));

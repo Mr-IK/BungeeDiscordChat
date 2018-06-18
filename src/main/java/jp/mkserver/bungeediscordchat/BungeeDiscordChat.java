@@ -71,9 +71,9 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
         ProxiedPlayer player = (ProxiedPlayer) e.getSender();
         String name = player.getName();
         String sname = ((ProxiedPlayer) e.getSender()).getServer().getInfo().getName();
-        String msg = e.getMessage();
+        String msg = repColor(e.getMessage());
         if(lunachat.equalsIgnoreCase("true")) {
-            String msgs = Japanizer.japanize(repColor(msg),JapanizeType.GOOGLE_IME);
+            String msgs = Japanizer.japanize(msg,JapanizeType.GOOGLE_IME);
             if(!msgs.equalsIgnoreCase("")){
                 msg = msg +" ("+msgs+")";
             }
@@ -169,17 +169,17 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
 
     //カラーコード除去
     public String repColor(String msg){
-        String msgs = msg.replace("§1","")
-                .replace("§2","").replace("§3","")
-                .replace("§4","").replace("§5","")
-                .replace("§6","").replace("§7","")
-                .replace("§8","").replace("§9","")
-                .replace("§0","").replace("§l","")
-                .replace("§m","").replace("§n","")
-                .replace("§o","").replace("§a","")
-                .replace("§b","").replace("§c","")
-                .replace("§d","").replace("§e","")
-                .replace("§f","");
+        String msgs = msg.replaceAll("&1","")
+                .replaceAll("&2","").replaceAll("&3","")
+                .replaceAll("&4","").replaceAll("&5","")
+                .replaceAll("&6","").replaceAll("&7","")
+                .replaceAll("&8","").replaceAll("&9","")
+                .replaceAll("&0","").replaceAll("&l","")
+                .replaceAll("&m","").replaceAll("&n","")
+                .replaceAll("&o","").replaceAll("&a","")
+                .replaceAll("&b","").replaceAll("&c","")
+                .replaceAll("&d","").replaceAll("&e","")
+                .replaceAll("&f","");
         return msgs;
     }
 
