@@ -4,3 +4,7 @@ bottoken: 'testtoken'
 channelid: 000
 #lunachatモードを機能させるか否か true/false
 lunachat: true
+#翻訳を可能にするか
+translate: true
+#translate true ならマイクロソフト翻訳apitokenを
+translation_api_key: 'apikey'

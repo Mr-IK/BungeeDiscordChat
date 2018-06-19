@@ -6,7 +6,7 @@
 
     <groupId>jp.mkserver</groupId>
     <artifactId>BungeeDiscordChat</artifactId>
-    <version>1.2.1</version>
+    <version>1.4.0</version>
     <packaging>jar</packaging>
 
     <name>BungeeDiscordChat</name>
@@ -44,6 +44,24 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2</version>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -76,6 +94,11 @@
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
             <version>3.6.0_361</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.5</version>
         </dependency>
     </dependencies>
 </project>

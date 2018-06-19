@@ -1,4 +1,4 @@
-package jp.mkserver.bungeediscordchat;
+package jp.mkserver.bungeediscordchat.japanizer;
 
 import java.util.HashMap;
 

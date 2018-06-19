@@ -1,4 +1,4 @@
-package jp.mkserver.bungeediscordchat;
+package jp.mkserver.bungeediscordchat.japanizer;
 
 import java.util.HashMap;
 
@@ -9,7 +9,7 @@ import java.util.HashMap;
 public class Japanizer {
 
     private static final String REGEX_URL = "https?://[\\w/:%#\\$&\\?\\(\\)~\\.=\\+\\-]+";
-    static String japanize(String org, JapanizeType type) {
+    public static String japanize(String org, JapanizeType type) {
 
         // 変換不要なら空文字列を返す
         if ( type == JapanizeType.NONE || !isNeedToJapanize(org) ) {

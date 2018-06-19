@@ -8,9 +8,9 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
-public class CreateCommand extends Command {
+public class MainCommand extends Command {
     BungeeDiscordChat plugin;
-    public CreateCommand(BungeeDiscordChat This) {
+    public MainCommand(BungeeDiscordChat This) {
         super("bd");
         plugin = This;
     }
