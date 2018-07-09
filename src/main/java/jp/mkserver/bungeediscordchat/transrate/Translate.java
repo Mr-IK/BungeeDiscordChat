@@ -18,6 +18,7 @@ public class Translate{
         translist.add("en");
         translist.add("ko");
         translist.add("zh");
+        translist.add("ru");
         translist.add("es");
         translist.add("fr");
         translist.add("de");

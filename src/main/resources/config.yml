@@ -8,3 +8,5 @@ lunachat: true
 translate: true
 #translate true ならマイクロソフト翻訳apitokenを
 translation_api_key: 'apikey'
+#個別のサーバjoin&quitメッセージ on/off
+joinquitmsg: 'on'

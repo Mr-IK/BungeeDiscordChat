@@ -122,6 +122,7 @@ public class Discord extends ListenerAdapter {
         if(channel == null||message == null){
             return;
         }
+        message = message.replace("@everyone","エブリワン").replace("@here","ヒア");
         channel.sendMessage(message).queue();
     }
 

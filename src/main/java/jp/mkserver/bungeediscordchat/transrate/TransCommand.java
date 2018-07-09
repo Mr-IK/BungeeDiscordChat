@@ -20,8 +20,9 @@ public class TransCommand extends Command {
             return;
         }
         ProxiedPlayer p = (ProxiedPlayer) sender;
-        if(!Translate.onoff&&!p.hasPermission("bd.op")){
-            p.sendMessage(new TextComponent(prefix+"§4機能停止中"));
+        if(!p.hasPermission("bd.op")){
+            p.sendMessage(new TextComponent(prefix+"§4あなたはこのコマンドを実行できません"));
+            p.sendMessage(new TextComponent(prefix+"§4You can not execute this command"));
             return;
         }
         if(args.length == 0) {
@@ -61,11 +62,6 @@ public class TransCommand extends Command {
                 return;
             }
             if(args[0].equalsIgnoreCase("off")){
-                if(!p.hasPermission("bd.op")){
-                    p.sendMessage(new TextComponent(prefix+"§4あなたはこのコマンドを実行できません"));
-                    p.sendMessage(new TextComponent(prefix+"§4You can not execute this command"));
-                    return;
-                }
                 ProxiedPlayer player = ProxyServer.getInstance().getPlayer(args[1]);
                 if(player == null){
                     p.sendMessage(new TextComponent(prefix + "§4そのプレイヤーは現在オフラインです。"));
@@ -96,11 +92,6 @@ public class TransCommand extends Command {
         }else if(args.length == 3) {
             if(!Translate.onoff){
                 p.sendMessage(new TextComponent(prefix+"§4機能停止中"));
-                return;
-            }
-            if(!p.hasPermission("bd.op")){
-                p.sendMessage(new TextComponent(prefix+"§4あなたはこのコマンドを実行できません"));
-                p.sendMessage(new TextComponent(prefix+"§4You can not execute this command"));
                 return;
             }
             if(!Translate.translist.contains(args[0])){

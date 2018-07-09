@@ -1,5 +1,8 @@
 package jp.mkserver.bungeediscordchat;
 
+import com.sun.deploy.util.BlackList;
+import jp.mkserver.bungeediscordchat.blacklist.BlackListCommand;
+import jp.mkserver.bungeediscordchat.blacklist.BlackListFile;
 import jp.mkserver.bungeediscordchat.commands.ReplyCommand;
 import jp.mkserver.bungeediscordchat.commands.TellCommand;
 import jp.mkserver.bungeediscordchat.japanizer.JapanizeType;
@@ -18,11 +21,11 @@ import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.event.EventHandler;
 
 import javax.security.auth.login.LoginException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
 public final class BungeeDiscordChat extends Plugin implements Listener{
-
     Config_file cf;
     Configuration config;
     Discord discord;
@@ -30,7 +33,9 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
     public HashMap<UUID,String> list;
     boolean connect = false;
     boolean power = true;
+    boolean joinquitmsg = false;
     HashMap<String, String> history;
+    public ArrayList<UUID> lists;
 
     String bottoken = null;
     long channelid = -1;
@@ -48,10 +53,14 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
         if(config.getString("translate").equalsIgnoreCase("true")) {
             Translate.TransEnable(this,config.getString("translation_api_key"));
         }
+        if(config.getString("joinquitmsg").equalsIgnoreCase("on")) {
+            joinquitmsg = true;
+        }
         link = new HashMap<>();
         list = new HashMap<>();
         history = new HashMap<>();
         links = FileManager.loadEnable(this);
+        lists = BlackListFile.loadEnable(this);
         try {
             getLogger().info("Connecting to bot…");
             discord = new Discord(this,bottoken);
@@ -69,6 +78,7 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
         }
         getProxy().getPluginManager().registerCommand(this, new MainCommand(this));
         getProxy().getPluginManager().registerCommand(this,new TransCommand(this));
+        getProxy().getPluginManager().registerCommand(this, new BlackListCommand(this));
         //tell commandを置き換える
         for ( String command : new String[]{"tell", "msg", "message", "m", "w", "t"}) {
             getProxy().getPluginManager().registerCommand(this, new TellCommand(this, command));
@@ -139,25 +149,43 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
     public void onLogin(PreLoginEvent e) {
         String name = e.getConnection().getName();
         discord.sendMessage(":bangbang: **"+name+" さんがログインしました**");
+        if(lists.contains(e.getConnection().getUniqueId())){
+            BlackListFile.upData(name,e.getConnection().getUniqueId(),null,null);
+            BlackListFile.BlackListData data = BlackListFile.getData(e.getConnection().getUniqueId());
+            String message = "§7§l[§d§lM§8§lBlackList§7§l]§7"+data.getmcid()+"("+data.getuuid()+") "+data.getmemo();
+            for ( String server : getProxy().getServers().keySet() ) {
+                ServerInfo info = getProxy().getServerInfo(server);
+                for (ProxiedPlayer players : info.getPlayers()) {
+                    if(players.hasPermission("mblacklist.use")){
+                        players.sendMessage(TextComponent.fromLegacyText("§7§l[§d§lM§8§lBlackList§7§l]ブラックリスト入りしているプレイヤーがサーバーに参加しました。"));
+                        players.sendMessage(TextComponent.fromLegacyText(message));
+                    }
+                }
+            }
+        }
     }
     @EventHandler
     public void onJoin(ServerConnectedEvent e) {
         String name = e.getPlayer().getName();
         String servername = e.getServer().getInfo().getName();
-        discord.sendMessage(":arrow_right:  **"+name+" さんが "+servername+" サーバーにログインしました**");
+        if(joinquitmsg) {
+            discord.sendMessage(":arrow_right:  **" + name + " さんが " + servername + " サーバーにログインしました**");
+        }
     }
     @EventHandler
     public void onQuit(ServerDisconnectEvent e) {
         String name = e.getPlayer().getName();
         String servername = e.getTarget().getName();
-        discord.sendMessage(":door: **"+name+" さんが "+servername+" サーバーからログアウトしました**");
+        if(joinquitmsg) {
+            discord.sendMessage(":door: **" + name + " さんが " + servername + " サーバーからログアウトしました**");
+        }
     }
 
     public void sendBroadcast(String message) {
         if(!power){
             return;
         }
-        ProxyServer.getInstance().broadcast(new TextComponent(message));
+        ProxyServer.getInstance().broadcast(TextComponent.fromLegacyText(message));
     }
 
     //そのプレイヤがリンク済みかチェック
