@@ -17,6 +17,7 @@ import static jp.mkserver.bungeediscordchat.blacklist.BlackListFile.getData;
 public class BlackListCommand extends Command {
     BungeeDiscordChat plugin;
     String prefix = "§7§l[§d§lM§8§lBlackList§7§l]§7";
+    public static String prefixs = "§7§l[§d§lM§8§lBlackList§7§l]§7";
     public BlackListCommand(BungeeDiscordChat This) {
         super("mblacklist");
         plugin = This;
@@ -45,9 +46,10 @@ public class BlackListCommand extends Command {
                     for(String key:getConfig().getKeys()) {
                         UUID uuid = UUID.fromString(key);
                         BlackListFile.BlackListData data = getData(uuid);
-                        String message = "§7§l[§d§lM§8§lBlackList§7§l]§7"+data.getmcid()+"("+data.getuuid()+") "+data.getmemo();
+                        String message = prefix+"§7"+data.getmcid()+"("+data.getuuid()+") "+data.getmemo();
                         p.sendMessage(new TextComponent(message));
                     }
+                    return;
                 }
             }else if(args.length == 2){
                 if(args[0].equalsIgnoreCase("remove")) {
@@ -93,6 +95,7 @@ public class BlackListCommand extends Command {
                 }
             }
             p.sendMessage(new TextComponent(prefix+"§2====ヘルプメニュー===="));
+            p.sendMessage(new TextComponent(prefix + "§6/mblacklist list §f: ブラックリストを見る"));
             p.sendMessage(new TextComponent(prefix + "§6/mblacklist add [プレイヤー名] [メモ] §f: ブラックリスト追加"));
             p.sendMessage(new TextComponent(prefix + "§6/mblacklist remove [プレイヤー名] §f: ブラックリストから削除"));
             p.sendMessage(new TextComponent(prefix + "§6/mblacklist info [プレイヤー名] §f: プレイヤーの情報確認"));

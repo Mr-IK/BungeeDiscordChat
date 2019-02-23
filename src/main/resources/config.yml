@@ -10,3 +10,12 @@ translate: true
 translation_api_key: 'apikey'
 #個別のサーバjoin&quitメッセージ on/off
 joinquitmsg: 'on'
+#muteされているリスト
+mutes:
+#cmuteされているリスト
+commmandmutes:
+#muteする時間(分)
+mutedtime: 30
+#muteする判定のライン(%)
+#例:80なら すべてのチャットが80%以上一致している場合mute
+mutedpercent: 80

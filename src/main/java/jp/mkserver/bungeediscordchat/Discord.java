@@ -115,6 +115,10 @@ public class Discord extends ListenerAdapter {
         return channel.getGuild().getMember(user).getNickname() + "#" +user.getDiscriminator();
     }
 
+    public String getMention(long id){
+       return jda.getUserById(id).getAsMention();
+    }
+
     public void sendMessage(String message){
         if(!main.power){
             return;
