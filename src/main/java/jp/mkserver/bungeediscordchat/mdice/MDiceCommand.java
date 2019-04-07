@@ -14,6 +14,7 @@ public class MDiceCommand  extends Command {
 
     public boolean waittime = false;
     public boolean d_now = false;
+    public int dmax = 100;
     HashMap<Integer,UUID> dmap = new HashMap<>();
     UUID d_owner = null;
     BungeeDiscordChat plugin;
@@ -24,7 +25,9 @@ public class MDiceCommand  extends Command {
     public void dstart(ProxiedPlayer starter,int max){
         if(!d_now){
             d_now = true;
+            dmax = max;
             starter.sendMessage(new TextComponent(prefix+"§a"+max+"Dを開始しました！"));
+            ProxyServer.getInstance().broadcast(TextComponent.fromLegacyText(prefix + starter.getDisplayName() + "§d§lさんが§e§l"+max+"D§d§lをスタートしました！§a§l(半角数字のみだけ入力してください！)"));
             d_owner = starter.getUniqueId();
             TimerTask dtask = new TimerTask() {
                 @Override
@@ -62,6 +65,7 @@ public class MDiceCommand  extends Command {
         d_owner = null;
         dmap.clear();
         d_now = false;
+        dmax = 100;
     }
 
     public void waitstart(){
@@ -161,6 +165,7 @@ public class MDiceCommand  extends Command {
                     p.sendMessage(new TextComponent(prefix + "§c数字を入力してください！"));
                     return;
                 }
+                return;
             }else if(args.length == 2){
                 try{
                     int put = Integer.parseInt(args[0]);
@@ -185,6 +190,7 @@ public class MDiceCommand  extends Command {
                     p.sendMessage(new TextComponent(prefix + "§c数字を入力してください！"));
                     return;
                 }
+                return;
             }
             p.sendMessage(new TextComponent(prefix+"§2====ヘルプメニュー===="));
             p.sendMessage(new TextComponent(prefix + "§f/mdice [数字] : ダイスを回す"));
@@ -207,8 +213,10 @@ public class MDiceCommand  extends Command {
         return result;
     }
 
+    //minが1,maxが8の場合
+    //r.nextInt(8-1+1) + 1;
     public int rollDice(int min,int max){
         Random r = new Random();
-        return r.nextInt(max) + min;
+        return r.nextInt(max-min+1) + min;
     }
 }

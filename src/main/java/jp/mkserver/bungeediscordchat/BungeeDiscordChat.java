@@ -6,6 +6,8 @@ import jp.mkserver.bungeediscordchat.commands.ReplyCommand;
 import jp.mkserver.bungeediscordchat.commands.TellCommand;
 import jp.mkserver.bungeediscordchat.japanizer.JapanizeType;
 import jp.mkserver.bungeediscordchat.japanizer.Japanizer;
+import jp.mkserver.bungeediscordchat.mat.MAT_BanSystem;
+import jp.mkserver.bungeediscordchat.mat.WhiteListCommand;
 import jp.mkserver.bungeediscordchat.mdice.MDiceCommand;
 import jp.mkserver.bungeediscordchat.transrate.TransCommand;
 import jp.mkserver.bungeediscordchat.transrate.Translate;
@@ -50,6 +52,26 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
 
     MDiceCommand mdice;
 
+    /////////////////////////
+    //M.A.T Ban System
+    /////////////////////////
+    MAT_BanSystem mat_ban;
+
+    //////////////////////
+    //M.A.T Whitelist System
+    //////////////////////
+    WhiteListCommand whiteListCommand;
+
+    //////////////////////
+    //M.A.T Command View System
+    //////////////////////
+    List<UUID> commandview;
+
+    //////////////////////
+    //M.A.T Bad Command System
+    //////////////////////
+    List<String> badcommands;
+
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -60,6 +82,20 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
         lunachat = config.getString("lunachat");
         if(config.contains("mutedtime")){
             mutedtime = config.getInt("mutedtime");
+        }
+        commandview = new ArrayList<>();
+        if(config.contains("commandview")){
+            List<String> str = config.getStringList("commandview");
+            for(String uuid : str){
+                commandview.add(UUID.fromString(uuid));
+            }
+        }else{
+            config.set("commandview",new ArrayList<>());
+            cf.saveConfig();
+        }
+        badcommands = new ArrayList<>();
+        if(config.contains("badcommands")){
+            badcommands = config.getStringList("badcommands");
         }
         if(config.contains("mutedpercent")){
             mutedpercent = config.getInt("mutedpercent");
@@ -101,6 +137,8 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
         getProxy().getPluginManager().registerCommand(this, new MainCommand(this));
         getProxy().getPluginManager().registerCommand(this, new TransCommand(this));
         getProxy().getPluginManager().registerCommand(this, new BlackListCommand(this));
+        whiteListCommand = new WhiteListCommand(this);
+        getProxy().getPluginManager().registerCommand(this, whiteListCommand);
         mdice = new MDiceCommand(this);
         getProxy().getPluginManager().registerCommand(this, mdice);
         //tell commandを置き換える
@@ -112,72 +150,116 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
             getProxy().getPluginManager().registerCommand(this, new ReplyCommand(this, command));
         }
         getProxy().getPluginManager().registerListener(this, this);
+        mat_ban = new MAT_BanSystem(this);
         discord.sendMessage(":ballot_box_with_check: **サーバーが起動しました**");
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        Thread th = new Thread(()->{
+            getLogger().info("Ban data saving…");
+            mat_ban.saveFile();
+            getLogger().info("Ban data save complete!");
+        });
+        th.start();
         discord.sendMessage(":no_entry:  **サーバーが停止しました**");
     }
 
-    String old1 = "";
-    String old2 = "";
-    String old3 = "";
-    String old4 = "";
-    String old5 = "";
-    String old6 = "";
-    String old7 = "";
-    String old8 = "";
-    String old9 = "";
-    String old10 = "";
-
-    public boolean addold(ProxiedPlayer p,String msg){
-        if(old1.equalsIgnoreCase("")){
-            old1 = msg;
-        }else if(old2.equalsIgnoreCase("")) {
-            old2 = msg;
-        }else if(old3.equalsIgnoreCase("")) {
-            old3 = msg;
-        }else if(old4.equalsIgnoreCase("")) {
-            old4 = msg;
-        }else if(old5.equalsIgnoreCase("")) {
-            old5 = msg;
-        }else if(old6.equalsIgnoreCase("")) {
-            old6 = msg;
-        }else if(old7.equalsIgnoreCase("")) {
-            old7 = msg;
-        }else if(old8.equalsIgnoreCase("")) {
-            old8 = msg;
-        }else if(old9.equalsIgnoreCase("")) {
-            old9 = msg;
-        }else if(old10.equalsIgnoreCase("")) {
-            old10 = msg;
-        }else{
-            old1 = old2;
-            old2 = old3;
-            old3 = old4;
-            old4 = old5;
-            old5 = old6;
-            old6 = old7;
-            old7 = old8;
-            old8 = old9;
-            old9 = old10;
-            old10 = msg;
-        }
-        return !checkSpaming(p);
+    public void addCommandViewList(UUID uuid){
+        commandview.add(uuid);
+        saveCommandViewList();
     }
 
-    public boolean checkSpaming(ProxiedPlayer p){
-        if(checkIttiritu(old1,old2)>=mutedpercent&&checkIttiritu(old2,old3)>=mutedpercent&&checkIttiritu(old3,old4)>=mutedpercent&&
-                checkIttiritu(old4,old5)>=mutedpercent&&checkIttiritu(old5,old6)>=mutedpercent&&checkIttiritu(old6,old7)>=mutedpercent&&
-                checkIttiritu(old7,old8)>=mutedpercent&&checkIttiritu(old8,old9)>=mutedpercent&&checkIttiritu(old9,old10)>=mutedpercent){
-            timemutedplayer(p.getUniqueId(),mutedtime);
-            p.sendMessage(new TextComponent(prefix+"§cあなたはspamをした可能性が高いため、muteされました。"));
-            getLogger().info(p.getName()+" is spamer!! muted.");
-            getLogger().info(old1+"||"+old2+"||"+old3+"||"+old4+"||"+old5+"||"
-                    +old6+"||"+old7+"||"+old8+"||"+old9+"||"+old10);
-            return true;
+    public void removeCommandViewList(UUID uuid){
+        commandview.remove(uuid);
+        saveCommandViewList();
+    }
+
+    public void saveCommandViewList(){
+        config.set("commandview",commandview);
+        cf.saveConfig();
+    }
+
+    public void addBadCommandList(String uuid){
+        badcommands.add(uuid);
+        saveBadCommandList();
+    }
+
+    public void removeBadCommandList(String uuid){
+        badcommands.remove(uuid);
+        saveBadCommandList();
+    }
+
+    public void saveBadCommandList(){
+        config.set("badcommands",badcommands);
+        cf.saveConfig();
+    }
+
+    HashMap<Integer,playerChatData> playerchatdatas = new HashMap<>();
+    List<playerChatData> warningchatdatas = new ArrayList<>();
+
+    class playerChatData {
+        String name;
+        UUID uuid;
+        String msg;
+        int outpoint;
+
+        public void addpoint(){
+            outpoint++;
+        }
+    }
+
+
+    public boolean addold(ProxiedPlayer p,String msg){
+        HashMap<Integer,playerChatData> copy = new HashMap<>();
+        for(int i = 99;i>=0;i--){
+            if(!playerchatdatas.containsKey(i)){
+               continue;
+            }
+            playerChatData pcd = playerchatdatas.get(i);
+            copy.put(i+1,pcd);
+        }
+        playerchatdatas = copy;
+        playerChatData pcd = new playerChatData();
+        pcd.uuid = p.getUniqueId();
+        pcd.name = p.getName();
+        pcd.msg = msg;
+        pcd.outpoint = 0;
+        playerchatdatas.put(0,pcd);
+        return !checkSpaming();
+    }
+
+
+    public boolean checkSpaming(){
+        playerChatData pcd = playerchatdatas.get(0);
+        for(int i = 1;i<100;i++){
+            if(!playerchatdatas.containsKey(i)){
+                break;
+            }
+            playerChatData pcd_c = playerchatdatas.get(i);
+            if(checkIttiritu(pcd.msg,pcd_c.msg)>=mutedpercent){
+                pcd.addpoint();
+                pcd_c.addpoint();
+                if(pcd_c.outpoint>=10){
+                    warningchatdatas.add(pcd_c);
+                }
+                playerchatdatas.put(i,pcd_c);
+            }
+        }
+        playerchatdatas.put(0,pcd);
+        for(playerChatData pc : warningchatdatas){
+            if(checkIttiritu(pcd.msg,pc.msg)>=mutedpercent){
+                pcd.addpoint();
+                pc.addpoint();
+                if(pc.outpoint>=15){
+                    warningchatdatas.remove(pc);
+                    timemutedplayer(pcd.uuid,mutedtime);
+                    timemutedplayer(pc.uuid,mutedtime);
+                    return true;
+                }
+                warningchatdatas.add(pc);
+            }
         }
         return false;
     }
@@ -190,6 +272,26 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
                 player.sendMessage(new TextComponent(prefix+"§cあなたはコマンド実行を禁止されています"));
                 e.setCancelled(true);
                 return;
+            }
+            for(String str:badcommands){
+                if(e.getMessage().startsWith(str)||e.getMessage().equalsIgnoreCase(str)){
+                    if(!player.hasPermission("bd.op")){
+                        e.setCancelled(true);
+                        player.sendMessage(TextComponent.fromLegacyText("Unknown command. Type \"/help\" for help."));
+                        for(ProxiedPlayer p : getProxy().getPlayers()){
+                            if(p.hasPermission("bd.op")){
+                                p.sendMessage(TextComponent.fromLegacyText("§c§l[C-Alert]§f§l不正なコマンドを検知: §d<"+player.getName()+"@"+((ProxiedPlayer) e.getSender()).getServer().getInfo().getName()+">§e: §c"+e.getMessage()));
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+            for(UUID uuid:commandview){
+                ProxiedPlayer p = getProxy().getPlayer(uuid);
+                if(p!=null){
+                    p.sendMessage(TextComponent.fromLegacyText("§8[C-View]§7<"+player.getName()+"@"+((ProxiedPlayer) e.getSender()).getServer().getInfo().getName()+">§e: §7"+e.getMessage()));
+                }
             }
             return;
         }
@@ -210,8 +312,8 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
             int mynumber = 0;
             try{
                 Integer s = Integer.valueOf(e.getMessage());
-                if (s < 0 || s > 101){
-                    player.sendMessage(new TextComponent(prefix + "§c§l1~100の数字を入力してください!"));
+                if (s <= 0 || s > mdice.dmax){
+                    player.sendMessage(new TextComponent(prefix + "§c§l1~"+mdice.dmax+"の数字を入力してください!"));
                     e.setCancelled(true);
                     return;
                 }
@@ -228,8 +330,9 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
                 msg = msg +" ("+msgs+")";
             }
         }
-        //Discordにメッセージを送信
-        discord.sendMessage("<"+name+"@"+sname+"> "+msg);
+        if(!mat_ban.DiscordLogSafetyMode){ //discordログセーフティモードがオンでなければ
+            discord.sendMessage("<"+name+"@"+sname+"> "+msg); //Discordにメッセージを送信
+        }
         //チャットした人のサーバー"以外"にメッセージを送信
         msg = ChatColor.translateAlternateColorCodes('&', e.getMessage());
         if(!msgs.equalsIgnoreCase("")){
@@ -258,12 +361,40 @@ public final class BungeeDiscordChat extends Plugin implements Listener{
     public void onLogout(PlayerDisconnectEvent e){
         ProxiedPlayer player = e.getPlayer();
         String name = player.getName();
-        discord.sendMessage(":x: **"+name+" さんがログアウトしました**");
+        if(!mat_ban.DiscordLogSafetyMode) { //discordログセーフティモードがオンでなければ
+            discord.sendMessage(":x: **" + name + " さんがログアウトしました**");
+        }
     }
     @EventHandler
     public void onLogin(PostLoginEvent e) {
         String name = e.getPlayer().getName();
-        discord.sendMessage(":bangbang: **"+name+" さんがログインしました**");
+        if(mat_ban.defaultBan.containsKey(e.getPlayer().getUniqueId())){
+            e.getPlayer().disconnect(TextComponent.fromLegacyText("§f§l[§4§lM.A.T§f§l]\n§c§lあなたは以下の理由でこのサーバーからBanされています。\n"+mat_ban.defaultBan.get(e.getPlayer().getUniqueId())));
+            return;
+        }
+        if(mat_ban.ipBan.containsKey(e.getPlayer().getAddress().getHostName())){
+            e.getPlayer().disconnect(TextComponent.fromLegacyText("§f§l[§4§lM.A.T§f§l]\n§c§lあなたは以下の理由でこのサーバーからBanされています。\n"+mat_ban.ipBan.get(e.getPlayer().getAddress().getHostName())));
+            return;
+        }
+        if(!whiteListCommand.enabledWhitelist.equalsIgnoreCase("")){
+            String whitelistname = whiteListCommand.enabledWhitelist;
+            if(whiteListCommand.listlist.containsKey(whitelistname)){
+                List<UUID> plist = whiteListCommand.listlist.get(whitelistname);
+                if(!plist.contains(e.getPlayer().getUniqueId())){
+                    e.getPlayer().disconnect(TextComponent.fromLegacyText("§f§l[§4§lM.A.T§f§l]\n§c§lあなたは以下の理由でこのサーバーから切断されました。\nホワイトリストに入っていない"));
+                    return;
+                }
+            }
+        }
+        if(whiteListCommand.listlist.containsKey("default")){
+            List<UUID> plist = whiteListCommand.listlist.get("default");
+            if(!plist.contains(e.getPlayer().getUniqueId())){
+                plist.add(e.getPlayer().getUniqueId());
+            }
+        }
+        if(!mat_ban.DiscordLogSafetyMode) { //discordログセーフティモードがオンでなければ
+            discord.sendMessage(":bangbang: **" + name + " さんがログインしました**");
+        }
         if(lists.contains(e.getPlayer().getUniqueId())){
             BlackListFile.upData(name,e.getPlayer().getUniqueId(),null,null);
             BlackListFile.BlackListData data = BlackListFile.getData(e.getPlayer().getUniqueId());

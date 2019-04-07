@@ -108,24 +108,33 @@ public class MainCommand extends Command {
             p.sendMessage(new TextComponent(plugin.prefix + "§6/bd unlink §f: Discordアカウントとマイクラのリンクを削除します"));
             if(p.hasPermission("bd.op")) {
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd check : 正常に接続しているかチェックします"));
-                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd info [Player名] : 他のプレイヤーのリンク状況を確認します"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd info [Player名] : 他のプレイヤーの状況を確認します"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd msg [内容] : Discordにメッセージを送信します"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd view : 個人チャットの表示を切り替えます"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd cview : コマンドの表示を切り替えます"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd mutelist : muteされているリストを表示"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd cmmutelist : cmmuteされているリストを表示"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd on : 機能を起動します"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd off : 機能を停止します(緊急時のみ使うこと)"));
-                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd mute [player名] : 特定のプレイヤーをmuteします"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd mute [player名] (時間(分)) : 特定のプレイヤーを(一定時間)muteします"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd unmute [player名] : muteを解除します"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd cmmute [player名] : 特定のプレイヤーをコマンドmuteします"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd cmunmute [player名] : コマンドmuteを解除します"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd amute [player名] : 特定のプレイヤーを2種類ともmuteします"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd aunmute [player名] : 2種類のmuteを解除します"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd addbadcommand [コマンド] : BadCommandを追加します"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd removebadcommand [コマンド] : BadCommandを削除します"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd listbadcommand : BadCommandリスト表示"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd ban <player名> <理由> : プレイヤーをBungeeBanします"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd kick <player名> <理由> : プレイヤーをBungeeKickします"));
+                p.sendMessage(new TextComponent(plugin.prefix + "§c/bd ipban <ipaddress> <理由> : プレイヤーをIpBanします"));
                 p.sendMessage(new TextComponent(plugin.prefix + "§c/bd title <main>//<sub>//<time> : (おまけ機能)全プレイヤーにタイトルを表示"));
                 if(!plugin.power){
                     p.sendMessage(new TextComponent(plugin.prefix+"§4§l機能停止中"));
                 }
             }
             p.sendMessage(new TextComponent(plugin.prefix+"§2====================="));
-            p.sendMessage(new TextComponent(plugin.prefix + "§c§lCreated by Mr_IK || v1.6.0"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c§lCreated by Mr_IK || v1.8.0"));
             return;
         }else if(args.length == 1){
             if(args[0].equalsIgnoreCase("check")){
@@ -192,6 +201,16 @@ public class MainCommand extends Command {
                 plugin.power = false;
                 p.sendMessage(new TextComponent(plugin.prefix+"§aBdiscordの機能を停止しました。"));
                 return;
+            }else if(args[0].equalsIgnoreCase("listbadcommand")){
+                if(!p.hasPermission("bd.op")){
+                    p.sendMessage(new TextComponent(plugin.prefix+"§4あなたはこのコマンドを実行できません"));
+                    return;
+                }
+                p.sendMessage(new TextComponent(plugin.prefix+"§cBadCommandList"));
+                for(String str:plugin.badcommands){
+                    p.sendMessage(new TextComponent(plugin.prefix+"§c"+str));
+                }
+                return;
             }else if(args[0].equalsIgnoreCase("view")){
                 if (!p.hasPermission("bd.op")) {
                     p.sendMessage(new TextComponent(plugin.prefix + "§4あなたはこのコマンドを実行できません"));
@@ -206,6 +225,20 @@ public class MainCommand extends Command {
                     p.sendMessage(new TextComponent(plugin.prefix + "§a表示をonしました。"));
                     return;
                 }
+            }else if(args[0].equalsIgnoreCase("cview")){
+                if (!p.hasPermission("bd.op")) {
+                    p.sendMessage(new TextComponent(plugin.prefix + "§4あなたはこのコマンドを実行できません"));
+                    return;
+                }
+                if(plugin.commandview.contains(p.getUniqueId())){
+                    plugin.removeCommandViewList(p.getUniqueId());
+                    p.sendMessage(new TextComponent(plugin.prefix + "§c表示をoffしました。"));
+                    return;
+                }else{
+                    plugin.addCommandViewList(p.getUniqueId());
+                    p.sendMessage(new TextComponent(plugin.prefix + "§a表示をonしました。"));
+                    return;
+                }
             }else if(args[0].equalsIgnoreCase("mutelist")){
                 if (!p.hasPermission("bd.op")) {
                     p.sendMessage(new TextComponent(plugin.prefix + "§4あなたはこのコマンドを実行できません"));
@@ -213,10 +246,15 @@ public class MainCommand extends Command {
                 }
                 p.sendMessage(new TextComponent(plugin.prefix + "§4muteされているリスト"));
                 for(String uuid : plugin.mutes){
+                    ProxiedPlayer target = ProxyServer.getInstance().getPlayer(UUID.fromString(uuid));
+                    String name = "オフライン";
+                    if(target != null){
+                        name = target.getName();
+                    }
                     p.sendMessage(new TextComponent(plugin.prefix + "§f"+uuid+"("+
-                            ProxyServer.getInstance().getPlayer(UUID.fromString(uuid)).getName()+")"));
-                    return;
+                           name +")"));
                 }
+                return;
             }else if(args[0].equalsIgnoreCase("cmmutelist")){
                 if (!p.hasPermission("bd.op")) {
                     p.sendMessage(new TextComponent(plugin.prefix + "§4あなたはこのコマンドを実行できません"));
@@ -224,10 +262,15 @@ public class MainCommand extends Command {
                 }
                 p.sendMessage(new TextComponent(plugin.prefix + "§4cmmuteされているリスト"));
                 for(String uuid : plugin.commandmutes){
+                    ProxiedPlayer target = ProxyServer.getInstance().getPlayer(UUID.fromString(uuid));
+                    String name = "オフライン";
+                    if(target != null){
+                        name = target.getName();
+                    }
                     p.sendMessage(new TextComponent(plugin.prefix + "§f"+uuid+"("+
-                            ProxyServer.getInstance().getPlayer(UUID.fromString(uuid)).getName()+")"));
-                    return;
+                            name +")"));
                 }
+                return;
             }
         }else if(args.length == 2) {
             if (args[0].equalsIgnoreCase("info")) {
@@ -242,6 +285,10 @@ public class MainCommand extends Command {
                         return;
                     }
                     p.sendMessage(new TextComponent(plugin.prefix + "§c" + args[1] + "さんは " + plugin.discord.getName_link(plugin.discord.jda.getUserById(plugin.links.get(player.getUniqueId()))) + " さんとリンクしています"));
+                    ProxiedPlayer pp = plugin.getProxy().getPlayer(args[1]);
+                    if(pp!=null){
+                        p.sendMessage(new TextComponent(plugin.prefix + "§c" + args[1] + "さんの情報 IP:"+pp.getAddress().getHostName()+" Ping:"+pp.getPing()+"ms"));
+                    }
                     return;
                 } else {
                     p.sendMessage(new TextComponent(plugin.prefix + "§4そのプレイヤーは現在オフラインです"));
@@ -370,6 +417,22 @@ public class MainCommand extends Command {
                     p.sendMessage(new TextComponent(plugin.prefix + "§4そのプレイヤーは現在オフラインです"));
                     return;
                 }
+            }else if(args[0].equalsIgnoreCase("addbadcom")) {
+                if (!p.hasPermission("bd.op")) {
+                    p.sendMessage(new TextComponent(plugin.prefix + "§4あなたはこのコマンドを実行できません"));
+                    return;
+                }
+                plugin.addBadCommandList(args[1]);
+                p.sendMessage(new TextComponent(plugin.prefix + "§aBadCommandを追加しました"));
+                return;
+            }else if(args[0].equalsIgnoreCase("removebadcom")) {
+                if (!p.hasPermission("bd.op")) {
+                    p.sendMessage(new TextComponent(plugin.prefix + "§4あなたはこのコマンドを実行できません"));
+                    return;
+                }
+                plugin.removeBadCommandList(args[1]);
+                p.sendMessage(new TextComponent(plugin.prefix + "§aBadCommandを削除しました"));
+                return;
             }
         }else if(args.length == 3) {
             if(args[0].equalsIgnoreCase("mute")) {
@@ -393,6 +456,43 @@ public class MainCommand extends Command {
                     p.sendMessage(new TextComponent(plugin.prefix+"§4そのプレイヤーは現在オフラインです"));
                     return;
                 }
+            }else if(args[0].equalsIgnoreCase("ban")) {
+                if (!p.hasPermission("bd.op")) {
+                    p.sendMessage(new TextComponent(plugin.prefix + "§4あなたはこのコマンドを実行できません"));
+                    return;
+                }
+                ProxiedPlayer player = ProxyServer.getInstance().getPlayer(args[1]);
+                if (player == null) {
+                    p.sendMessage(new TextComponent(plugin.prefix + "§4そのプレイヤーは現在オフラインです"));
+                    return;
+                } else {
+                    plugin.mat_ban.defaultBan(player.getUniqueId(),args[2]);
+                    player.disconnect(TextComponent.fromLegacyText("§f§l[§4§lM.A.T§f§l]\n§c§lあなたは以下の理由でこのサーバーから切断されました。\n§f§lBanされました"));
+                    p.sendMessage(new TextComponent(plugin.prefix + "§c§lBanしました。"));
+                    return;
+                }
+            }else if(args[0].equalsIgnoreCase("kick")) {
+                if (!p.hasPermission("bd.op")) {
+                    p.sendMessage(new TextComponent(plugin.prefix + "§4あなたはこのコマンドを実行できません"));
+                    return;
+                }
+                ProxiedPlayer player = ProxyServer.getInstance().getPlayer(args[1]);
+                if (player == null) {
+                    p.sendMessage(new TextComponent(plugin.prefix + "§4そのプレイヤーは現在オフラインです"));
+                    return;
+                } else {
+                    player.disconnect(TextComponent.fromLegacyText("§f§l[§4§lM.A.T§f§l]\n§c§lあなたは以下の理由でこのサーバーから切断されました。\n§f§l"+ChatColor.translateAlternateColorCodes('&',args[2])));
+                    p.sendMessage(new TextComponent(plugin.prefix + "§c§lKickしました。"));
+                    return;
+                }
+            }else if(args[0].equalsIgnoreCase("ipban")) {
+                if (!p.hasPermission("bd.op")) {
+                    p.sendMessage(new TextComponent(plugin.prefix + "§4あなたはこのコマンドを実行できません"));
+                    return;
+                }
+                plugin.mat_ban.ipBan(args[1],args[2]);
+                p.sendMessage(new TextComponent(plugin.prefix + "§c§lipBanしました。"));
+                return;
             }
         }
         p.sendMessage(new TextComponent(plugin.prefix+"§2====ヘルプメニュー===="));
@@ -402,25 +502,32 @@ public class MainCommand extends Command {
         p.sendMessage(new TextComponent(plugin.prefix + "§6/bd unlink §f: Discordアカウントとマイクラのリンクを削除します"));
         if(p.hasPermission("bd.op")) {
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd check : 正常に接続しているかチェックします"));
-            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd info [Player名] : 他のプレイヤーのリンク状況を確認します"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd info [Player名] : 他のプレイヤーの状況を確認します"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd msg [内容] : Discordにメッセージを送信します"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd view : 個人チャットの表示を切り替えます"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd cview : コマンドの表示を切り替えます"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd mutelist : muteされているリストを表示"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd cmmutelist : cmmuteされているリストを表示"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd on : 機能を起動します"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd off : 機能を停止します(緊急時のみ使うこと)"));
-            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd mute [player名] : 特定のプレイヤーをmuteします"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd mute [player名] (時間(分)) : 特定のプレイヤーを(一定時間)muteします"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd unmute [player名] : muteを解除します"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd cmmute [player名] : 特定のプレイヤーをコマンドmuteします"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd cmunmute [player名] : コマンドmuteを解除します"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd amute [player名] : 特定のプレイヤーを2種類ともmuteします"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd aunmute [player名] : 2種類のmuteを解除します"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd addbadcommand [コマンド] : BadCommandを追加します"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd removebadcommand [コマンド] : BadCommandを削除します"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd listbadcommand : BadCommandリスト表示"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd ban <player名> <理由> : プレイヤーをBungeeBanします"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd kick <player名> <理由> : プレイヤーをBungeeKickします"));
+            p.sendMessage(new TextComponent(plugin.prefix + "§c/bd ipban <ipaddress> <理由> : プレイヤーをIpBanします"));
             p.sendMessage(new TextComponent(plugin.prefix + "§c/bd title <main>//<sub>//<time> : (おまけ機能)全プレイヤーにタイトルを表示"));
             if(!plugin.power){
                 p.sendMessage(new TextComponent(plugin.prefix+"§4§l機能停止中"));
             }
         }
         p.sendMessage(new TextComponent(plugin.prefix+"§2====================="));
-        p.sendMessage(new TextComponent(plugin.prefix + "§c§lCreated by Mr_IK || v1.6.0"));
+        p.sendMessage(new TextComponent(plugin.prefix + "§c§lCreated by Mr_IK || v1.8.0"));
     }
 }
